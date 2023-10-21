@@ -26,6 +26,57 @@
   음성 데이터로 구성되어 있으며 세부적으로는 성별, 개월수로 구분되어 있습니다.
 </p>
 <p>배고픔 음성 데이터 277개 그외 176개를 사용하여 모델을 학습 및 테스트하였습니다. 학습 데이터로는 254개를 테스트 데이터로는 23개를 사용하였습니다.</p>
+<p>아래 코드는 그 중 일부를 가져와 음성 데이터의 기본 정보를 출력하였습니다.</p>
+
+```Python
+import os
+import pathlib
+import librosa
+import numpy as np
+
+# 데이터 디렉토리 경로 설정
+data_directory = '/Classificant_Audio_data_test'
+data_dir = pathlib.Path(data_directory)
+
+# WAV 파일 경로 가져오기
+audio_paths = sorted(list(data_dir.glob('*.wav')))
+
+# 오디오 정보 수집
+audio_info = []
+
+for wav_path in audio_paths:
+        y, sr = librosa.load(wav_path, sr=None)
+        duration = librosa.get_duration(y=y, sr=sr)  # 오디오 길이
+
+        info = f"File Name: {wav_path.name} | Shape: {y.shape} | Sampling Rate: {sr} | Duration: {duration} seconds"
+        audio_info.append(info)
+# 결과 출력
+for info in audio_info:
+    print(info)
+
+print(f"Total Output Count: {len(audio_info)}")
+```
+<pre>결과
+File Name: awake_42.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: awake_43.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: awake_44.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: diaper_42.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: diaper_43.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: diaper_44.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: hug_42.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: hug_43.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: hug_44.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: hungry-f-04-07.wav | Shape: (48000,) | Sampling Rate: 8000 | Duration: 6.0 seconds
+File Name: hungry-f-04-08.wav | Shape: (48000,) | Sampling Rate: 8000 | Duration: 6.0 seconds
+File Name: hungry-f-04-09.wav | Shape: (48000,) | Sampling Rate: 8000 | Duration: 6.0 seconds
+File Name: sleepy_42.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: sleepy_43.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: sleepy_44.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: uncom_42.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: uncom_43.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+File Name: uncom_44.wav | Shape: (96000,) | Sampling Rate: 16000 | Duration: 6.0 seconds
+Total Output Count: 18
+</pre>
 
 <h1>MFCC</h1>
 <details>
@@ -85,3 +136,52 @@
 ![MFCC_Hug_f_04](https://github.com/kdk0411/Audio_Classification_Model/assets/99461483/80e71de2-ded5-4e71-b0ab-aed1b1a3503c)
 ![MFCC_Hug_m_04](https://github.com/kdk0411/Audio_Classification_Model/assets/99461483/03833127-91ef-4521-8749-0a0d928c8c28)
 
+<h1>Mel-Spectrogram</h1>
+<details>
+  <summary>Mel-Spectrogram</summary>
+  <div markdown="1">
+    <pre>
+    Mel-Spectrogram은 오디오 신호의 주파수 내용을 시간에 따라 표현한 그래프인 Spectrogram을
+    Mel 스케일(Mel Scale)로 변환한 것입니다. 결과적으로 특정 시간에 오디오 신호의 주파수 내용을
+    Mel 스케일로 표현한 그래프라고 할 수 있습니다.
+      <ul><li><strong>Mel 스케일(Mel Scale)</strong>
+Mel 스케일은 인간의 청각 특성에 근거한 주파수 스케일입니다. Mel 스케일은
+주파수 간의 간격이 Spectrogram과 달리 인간 청각 시스템의 높은 감도를
+반영하도록 조정되었기 때문에 음성 신호 내의 주파수 성분을 더욱 자연스럽게
+표현할 수 있습니다. 이는 중요한 부분을 강조하고 불필요한 부분을 무시하며
+인간의 청각 시스템과 비슷하게 만듭니다.
+        </li>
+      </ul>
+  </pre>
+  </div>
+</details>
+
+```Python
+import os
+import pathlib
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+
+Dataset_Path = '/Audio'
+Data_dir = pathlib.Path(Dataset_Path)
+
+# 모든 .wav 파일 경로를 가져옵니다.
+all_wav_paths = list(Data_dir.glob('*.wav'))
+# wav파일에 대한 Mel-Spectrogram 추출 및 시각화를 진행합니다.
+for wav_path in all_wav_paths:
+    y, sr = librosa.load(wav_path, sr=None)
+    # Mel-Spcetrogram을 추출합니다.
+    mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=40)
+    # power_to_db를 이용하여 데시벨 단위로 변환합니다.
+    mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+    # Mel-Spectrogram을 시각화 합니다.
+    plt.figure(figsize=(10, 4))
+    librosa.display.specshow(mel_spec_db, x_axis='time', y_axis='mel', sr=sr, fmax=sr/2)
+    plt.colorbar()
+    plt.title(f"Mel-Spectrogram - {wav_path.name}")
+    plt.tight_layout()
+    plt.show()
+```
+![Mel_Spectorgram_Hug_f_04](https://github.com/kdk0411/Audio_Classification_Model/assets/99461483/f02290af-b884-4155-80f6-f68beaab34a1)
+![Mel_Spectorgram_Hug_m_04](https://github.com/kdk0411/Audio_Classification_Model/assets/99461483/4fc79c71-f961-4227-bdff-f15f9bd044c8)
