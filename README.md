@@ -198,9 +198,7 @@ for wav_path in all_wav_paths:
       이를 정리하면
       H(x) = R(x) + x 로 표현할 수 있다.
     잔차 블록은 실제 출력인 H(x)를 학습하려고 합니다. 또한 아래 그림과 같이 x로부터 항등 연결이
-    있기 떄문에 layer는 실제로 잔차 R(x)를 학습한다는 것을 알 수 있습니다.
-  </pre>
-  </div>
+    있기 떄문에 layer는 실제로 잔차 R(x)를 학습한다는 것을 알 수 있습니다.</pre></div>
 </details>
 
 ```Python
