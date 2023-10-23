@@ -192,10 +192,9 @@ for wav_path in all_wav_paths:
   <summary>Residaul_Block</summary>
   <div markdown="1">
     <pre>
-    Mel-Spectrogram은 오디오 신호의 주파수 내용을 시간에 따라 표현한 그래프인 Spectrogram을
-    Mel 스케일(Mel Scale)로 변환한 것입니다. 결과적으로 특정 시간에 오디오 신호의 주파수 내용을
-    Mel 스케일로 표현한 그래프라고 할 수 있습니다.
-      <ul><li><strong>Mel 스케일(Mel Scale)</strong>
+    Layer의 숫자를 늘리는 것이 모델성능을 무조건적으로 향상 시켜주지 않습니다.
+    또한 기울기 손실(Gradient Vanising), Curse of Dimensionality
+      <ul><li><strong>잔차 학습</strong>
 Mel 스케일은 인간의 청각 특성에 근거한 주파수 스케일입니다. Mel 스케일은
 주파수 간의 간격이 Spectrogram과 달리 인간 청각 시스템의 높은 감도를
 반영하도록 조정되었기 때문에 음성 신호 내의 주파수 성분을 더욱 자연스럽게
