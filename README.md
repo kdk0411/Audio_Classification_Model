@@ -102,7 +102,8 @@ Total Output Count: 18
   </pre>
   </div>
 </details>
-  
+<p>아래 코드는 MFCC를 이용한 2가지의 음성 데이터의 시각화 코드입니다.</p>
+
   ```Python
   import os
   import pathlib
