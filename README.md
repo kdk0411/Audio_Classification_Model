@@ -185,3 +185,64 @@ for wav_path in all_wav_paths:
 ```
 ![Mel_Spectorgram_Hug_f_04](https://github.com/kdk0411/Audio_Classification_Model/assets/99461483/f02290af-b884-4155-80f6-f68beaab34a1)
 ![Mel_Spectorgram_Hug_m_04](https://github.com/kdk0411/Audio_Classification_Model/assets/99461483/4fc79c71-f961-4227-bdff-f15f9bd044c8)
+
+
+<h1>Residaul_Block</h1>
+<details>
+  <summary>Residaul_Block</summary>
+  <div markdown="1">
+    <pre>
+    Mel-Spectrogram은 오디오 신호의 주파수 내용을 시간에 따라 표현한 그래프인 Spectrogram을
+    Mel 스케일(Mel Scale)로 변환한 것입니다. 결과적으로 특정 시간에 오디오 신호의 주파수 내용을
+    Mel 스케일로 표현한 그래프라고 할 수 있습니다.
+      <ul><li><strong>Mel 스케일(Mel Scale)</strong>
+Mel 스케일은 인간의 청각 특성에 근거한 주파수 스케일입니다. Mel 스케일은
+주파수 간의 간격이 Spectrogram과 달리 인간 청각 시스템의 높은 감도를
+반영하도록 조정되었기 때문에 음성 신호 내의 주파수 성분을 더욱 자연스럽게
+표현할 수 있습니다. 이는 중요한 부분을 강조하고 불필요한 부분을 무시하며
+인간의 청각 시스템과 비슷하게 만듭니다.
+        </li>
+      </ul>
+  </pre>
+  </div>
+</details>
+
+```Python
+# Residual Block 함수생성
+def residual_block(inputs, filters, kernel_size):
+    x = Conv2D(filters, kernel_size, padding='same')(inputs)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = Conv2D(filters, kernel_size, padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Add()([inputs, x])
+    x = Activation('relu')(x)
+    return x
+
+from tensorflow.keras.layers import Input, concatenate, Conv2D, Reshape, BatchNormalization, Activation, Add, Flatten
+from tensorflow.keras.layers import LeakyReLU
+# MFCC 모델 생성
+mfcc_input = Input(shape=X_train_mfcc_scaled.shape[1:])
+mfcc_reshaped = Reshape((*X_train_mfcc_scaled.shape[1:], 1))(mfcc_input)
+mfcc_model = Conv2D(32, kernel_size=(4, 4))(mfcc_reshaped)
+mfcc_model = BatchNormalization()(mfcc_model)
+mfcc_model = LeakyReLU()(mfcc_model)
+
+# Mfcc Model에 Residual Block 추가
+mfcc_model = residual_block(mfcc_model, 32, (4, 4))
+mfcc_model = residual_block(mfcc_model, 32, (4, 4))
+
+# Mel-Spectrogram 모델 생성
+mel_spec_input = Input(shape=(X_train_mel_spec_scaled.shape[1], X_train_mel_spec_scaled.shape[2], 1))
+mel_spec_model = Conv2D(32, kernel_size=(4, 4))(mel_spec_input)
+mel_spec_model = BatchNormalization()(mel_spec_model)
+mel_spec_model = LeakyReLU()(mel_spec_model)
+
+# Mel-Spectrogram Model에 Residual Block 추가
+mel_spec_model = residual_block(mel_spec_model, 32, (4, 4))
+mel_spec_model = residual_block(mel_spec_model, 32, (4, 4))
+
+mfcc_model_flatten = Flatten()(mfcc_model)
+mel_spec_model_flatten = Flatten()(mel_spec_model)
+combined = concatenate([mfcc_model_flatten, mel_spec_model_flatten])
+```
