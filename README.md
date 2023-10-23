@@ -156,6 +156,7 @@ Mel 스케일은 인간의 청각 특성에 근거한 주파수 스케일입니�
   </pre>
   </div>
 </details>
+<p>아래 코드는 Mel-Spcetorgram을 이용하여 2가지의 음성 데이터를 시각화한 코드입니다.</p>
 
 ```Python
 import os
