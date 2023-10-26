@@ -240,3 +240,140 @@ mfcc_model_flatten = Flatten()(mfcc_model)
 mel_spec_model_flatten = Flatten()(mel_spec_model)
 combined = concatenate([mfcc_model_flatten, mel_spec_model_flatten])
 ```
+
+
+## 결과 및 보고
+
+  아래 코드를 사용하여 Flask 에서 실행 하였습니다.
+
+```python
+import pandas as pd
+import numpy as np
+import librosa
+import os
+import pathlib
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import load_model
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import f1_score
+
+
+class AudioClassifier:
+    def __init__(self, wav_path, csv_path):
+        self.wav_path = wav_path
+        self.csv_path = csv_path
+
+    def process_data(self):
+        X_mfcc = []
+        X_mel_spec = []
+        labels = []
+        data_dir = pathlib.Path(self.wav_path)
+        all_wav_paths = sorted(list(data_dir.glob('*.wav')))
+
+        df = pd.read_csv(self.csv_path)
+        cry_audio_file = df["Cry_Audio_File"]
+        label = df["Label"]
+
+        max_length = 188
+
+        for wav_path_dir in all_wav_paths:
+            file_name = os.path.basename(wav_path_dir)
+            index = cry_audio_file[cry_audio_file == file_name].index[0]
+            label_value = label[index]
+
+            y, sr = librosa.load(wav_path_dir, sr=16000, duration=6)
+
+            mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
+            if mfcc.shape[1] > max_length:
+                mfcc = mfcc[:, :max_length]
+
+            mel_spec = librosa.feature.melspectrogram(y=y, sr=sr)
+            mel_spec = librosa.amplitude_to_db(mel_spec, ref=np.max)
+            if mel_spec.shape[1] > max_length:
+                mel_spec = mel_spec[:, :max_length]
+
+            X_mfcc.append(mfcc)
+            X_mel_spec.append(mel_spec)
+            labels.append(label_value)
+
+        X_mfcc = np.array(X_mfcc)
+        X_mel_spec = np.array(X_mel_spec)
+        labels = np.array(labels)
+        return X_mfcc, X_mel_spec, labels
+
+    def preprocess_data(self):
+        X_mfcc, X_mel_spec, labels = self.process_data()
+
+        scaler_mfcc = StandardScaler()
+        scaler_mel_spec = StandardScaler()
+
+        X_mfcc_scaled = scaler_mfcc.fit_transform(X_mfcc.reshape(-1, X_mfcc.shape[-1])).reshape(X_mfcc.shape)
+        X_mel_spec_scaled = scaler_mel_spec.fit_transform(X_mel_spec.reshape(-1, X_mel_spec.shape[-1])).reshape(X_mel_spec.shape)
+
+        label_encoder = LabelEncoder()
+        labels_encoded = label_encoder.fit_transform(labels)
+        num_classes = len(label_encoder.classes_)
+
+        return X_mfcc_scaled, X_mel_spec_scaled, labels_encoded, label_encoder, num_classes
+
+test_csv_path = "/content/drive/MyDrive/Baby_Sound/Hungry/Classificant_Audio_data_test/test_Audio_New.csv"
+test_data_dir = "/content/drive/MyDrive/Baby_Sound/Hungry/Classificant_Audio_data_test"
+
+test_classifier = AudioClassifier(test_data_dir, test_csv_path)
+X_test_mfcc, X_test_mel_spec, y_test, _, _ = test_classifier.preprocess_data()
+
+# 모델 불러오기
+model = load_model('/content/drive/MyDrive/Audio_Classify_Model_0.2_97.h5')
+
+# 모델 평가
+loss, accuracy = model.evaluate([X_test_mfcc, X_test_mel_spec], y_test)
+
+y_pred = model.predict([X_test_mfcc, X_test_mel_spec])
+y_pred_classes = np.argmax(y_pred, axis=1)
+f1 = f1_score(y_test, y_pred_classes, average='weighted')
+
+print("F1 Score:", np.ceil(f1*1000)/1000)
+print("Test Loss:", np.ceil(loss*1000)/1000)
+print("Test Accuracy:", np.ceil(accuracy*10000)/100, "%")
+
+```
+
+```
+  2/2 [==============================] - 1s 22ms/step - loss: 0.2583 - accuracy: 0.9714
+  2/2 [==============================] - 0s 59ms/step
+  F1 Score: 0.972
+  Test Loss: 0.259
+  Test Accuracy: 97.15 %
+```
+
+  위 코드와 같이 정확도, 손실, F1 Score를 측정하였습니다.
+  정확도는 97.15%, F1 Score는 0.972 손실은 0.259로 측정 되었습니다.
+
+  이는 실제로 테스트 했을떄도 같은 결과를 도출 하였습니다.
+  실제는 코드로 만든 정적인 것과 다르게 주변 노이즈와 Rpi에서의 자체적인 노이즈
+  Rpi를 사용 하였을때 저항에 의한 노이즈 등을 생각했을떄는 제가 준비한 음성 데이터 이외에는
+  이보다 더 낮은 점수를 기록할 수 있습니다.
+
+  프로젝트를 진행함에 있어서 여러가지의 문제점이 발견되었습니다.
+  1. 데이터 불균형
+  2. 데이터셋의 부족
+  3. 녹음기기 노이즈
+  대표적으로는 이렇게 3가지 였습니다.
+
+  먼저 데이터 불균형의 경우는 배고픔, 그외 이렇게 이진분류를 진행 하는것으로 팀원들과 상의 후 결정하였습니다
+  물론 그외의 다른 경우도 포함 한다면 가능은 하겠지만 정확도가 확연히 떨어질 것을 우려하여 결정하게 된 사항입니다.
+
+  두 번째로 데이터셋의 부족입니다. 외국 기업에 연락하여 아이의 울음소리 데이터를 요청해보았지만
+  법률상 아이의 울음소리를 제공하는것이 문제가 될 수 있다는 답변들을 받아 부족함을 느꼇습니다.
+  이는 Kaggle에서 또다른 데이터셋을 발견하게 되어 조금이나마 추가하게 되었습니다.
+  이외에 여러 아이 울음소리 데이터는 많았지만 모두 신빙성이 떨어졌습니다.
+  아이의 울음소리가 맞는지 맞더라도 어떤 이유떄문에 우는것인지 알 수 없었기 떄문에 데이터셋의 부족을 느꼇습니다.
+
+  마지막으로 녹음기기의 노이즈입니다. 아이 울음소리를 기준으로 모델을 학습시켰지만 분명히 모델은
+  녹음 기기의 노이즈 또한 학습하였을 것입니다. 이를 노이즈 제거 알고리즘을 이용하여 해결하려 했지만
+  긍정적인 변화를 도출해낼 수 없을것이라 판단하여 기존방식대로 진행 하였습니다.
+  이유는 학습된 데이터셋과 테스트 데이터셋의 출처가 다르며 실제 녹음기기 또한 노이즈가 존재하기 떄문에
+  특정 노이즈를 모델이 학습하지 못했을 것이라 판단했기 떄문입니다.
+
+  프로젝트를 마치며 가장 아쉬웠던 부분이 존재합니다.
+  
