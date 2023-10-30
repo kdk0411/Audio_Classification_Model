@@ -7,6 +7,7 @@
   <li>Mel-Spectrogram</li>
   <li>Residual_Block</li>
   <li>결과 및 보고</li>
+  <li>문제점 및 해결</li>
 </ul>
 <h1>프로젝트 설명</h1>
 <p>
