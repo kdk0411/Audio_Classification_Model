@@ -205,14 +205,14 @@ for wav_path in all_wav_paths:
 ```Python
 # Residual Block 함수생성
 def residual_block(inputs, filters, kernel_size):
-    x = Conv2D(filters, kernel_size, padding='same')(inputs)
-    x = BatchNormalization()(x)
-    x = Activation('relu')(x)
-    x = Conv2D(filters, kernel_size, padding='same')(x)
-    x = BatchNormalization()(x)
-    x = Add()([inputs, x])
-    x = Activation('relu')(x)
-    return x
+    block = Conv2D(filters, kernel_size, padding='same')(inputs)
+    block = BatchNormalization()(x)
+    block = Activation('relu')(x)
+    block = Conv2D(filters, kernel_size, padding='same')(x)
+    block = BatchNormalization()(x)
+    block = Add()([inputs, x])
+    block = Activation('relu')(x)
+    return block
 
 from tensorflow.keras.layers import Input, concatenate, Conv2D, Reshape, BatchNormalization, Activation, Add, Flatten
 from tensorflow.keras.layers import LeakyReLU
